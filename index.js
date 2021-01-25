@@ -4,29 +4,23 @@ const horizontal = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 const vertical = [1, 2, 3, 4, 5, 6, 7, 8]
 
 const moveUp = (pos, counter) => {
-    return { x: pos.x, y: pos.y + counter }
+    const newY = pos.y + counter;
+    return newY <= 8 ? { x: pos.x, y: newY } : { x: pos.x, y: -1 };
 }
 
 const moveDown = (pos, counter) => {
-    return { x: pos.x, y: pos.y - counter }
+    const newY = pos.y - counter;
+    return newY >= 1 ? { x: pos.x, y: newY } : { x: pos.x, y: -1 };
 }
 
 const moveLeft = (pos, counter) => {
     const index = horizontal.indexOf(pos.x);
-    let newX = -1;
-    if (index - counter >= 0) {
-        newX = horizontal[index - counter];
-    }
-    return { x: newX, y: pos.y }
+    return index - counter >= 0 ? { x: horizontal[index - counter], y: pos.y } : { x: -1, y: pos.y }
 }
 
 const moveRight = (pos, counter) => {
     const index = horizontal.indexOf(pos.x);
-    let newX = -1;
-    if (index + counter < horizontal.length) {
-        newX = horizontal[index + counter];
-    }
-    return { x: newX, y: pos.y }
+    return index - counter < horizontal.length ? { x: horizontal[index + counter], y: pos.y } : { x: -1, y: pos.y }
 }
 
 const checkIfPositionContainsChessPiece = (pos, occupiedPositions) => {
@@ -37,12 +31,31 @@ const checkIfPositionContainsChessPiece = (pos, occupiedPositions) => {
 const displayMovement = (oldPosition, newPosition, eatEnemie = false) => {
     const separator = eatEnemie ? 'x' : '-';
     console.log('T' + oldPosition.x + oldPosition.y + separator + newPosition.x + newPosition.y);
-
 }
-// Testing
-let positionTour = {
-    x: 'd',
-    y: 5
+
+const move = (moveCallback, intialPosition, enemies, allies) => {
+    let counter = 1;
+    let canMoveToDirection = true;
+    while (canMoveToDirection && counter < 8) {
+        const newPosition = moveCallback(intialPosition, counter);
+        if (newPosition.x !== -1 && newPosition.y !== -1) {
+            // Check if enemy is in new position
+            if (checkIfPositionContainsChessPiece(newPosition, enemies)) {
+                displayMovement(intialPosition, newPosition, true);
+                canMoveToDirection = false;
+            }
+            // Check if ally is in new position
+            else if (checkIfPositionContainsChessPiece(newPosition, allies)) {
+                canMoveToDirection = false;
+            }
+            else {
+                displayMovement(intialPosition, newPosition);
+                counter++;
+            }
+        } else {
+            canMoveToDirection = false
+        }
+    }
 }
 
 const main = () => {
@@ -51,7 +64,7 @@ const main = () => {
         y: 5
     }
 
-    const allies = [
+    const alliesPositions = [
         {
             x: 'd',
             y: 2
@@ -62,112 +75,20 @@ const main = () => {
         }
     ]
 
-    const enemies = [
+    const enemiesPositions = [
         {
             x: 'd',
             y: 7
-        }
+        },
     ]
 
-    let canMoveUp = true;
-    let canMoveDown = true;
-    let canMoveLeft = true;
-    let canMoveRight = true;
+    const movementsCallbacks = [moveDown, moveRight, moveUp, moveLeft];
 
-    // Move DOWN
-    let counter = 1;
-    while (canMoveDown && counter < 8) {
-        const newPosition = moveDown(intialPosition, counter);
-        if (vertical.includes(newPosition.y)) {
-            // Check if enemy is next position
-            if (checkIfPositionContainsChessPiece(newPosition, enemies)) {
-                displayMovement(intialPosition, newPosition, true);
-                canMoveDown = false;
-            }
-            else if (checkIfPositionContainsChessPiece(newPosition, allies)) {
-                canMoveDown = false;
-            }
-            else {
-                displayMovement(intialPosition, newPosition);
-                counter++;
-            }
-        } else {
-            canMoveDown = false
-        }
-    }
-
-    // Move RIGHT
-    counter = 1;
-    while (canMoveRight && counter < 8) {
-        const newPosition = moveRight(intialPosition, counter);
-        if (newPosition.x !== -1) {
-            // Check if enemy is next position
-            if (checkIfPositionContainsChessPiece(newPosition, enemies)) {
-                displayMovement(intialPosition, newPosition, true);
-                canMoveRight = false;
-            }
-            else if (checkIfPositionContainsChessPiece(newPosition, allies)) {
-                canMoveRight = false;
-            }
-            else {
-                displayMovement(intialPosition, newPosition);
-                counter++;
-            }
-        } else {
-            canMoveRight = false
-        }
-    }
-
-    counter = 1;
-    // move UP
-    while (canMoveUp && counter < 8) {
-        const newPosition = moveUp(intialPosition, counter);
-        if (vertical.includes(newPosition.y)) {
-            // Check if enemy is next position
-            if (checkIfPositionContainsChessPiece(newPosition, enemies)) {
-                displayMovement(intialPosition, newPosition, true);
-                canMoveUp = false;
-            }
-            else if (checkIfPositionContainsChessPiece(newPosition, allies)) {
-                canMoveUp = false;
-            }
-            else {
-                displayMovement(intialPosition, newPosition);
-                counter++;
-            }
-        } else {
-            canMoveUp = false
-        }
-
-    }
-
-
-
-    // Move LEFT
-    counter = 1;
-    while (canMoveLeft && counter < 8) {
-        const newPosition = moveLeft(intialPosition, counter);
-        if (newPosition.x !== -1) {
-            // Check if enemy is next position
-            if (checkIfPositionContainsChessPiece(newPosition, enemies)) {
-                displayMovement(intialPosition, newPosition, true);
-                canMoveLeft = false;
-            }
-            else if (checkIfPositionContainsChessPiece(newPosition, allies)) {
-                canMoveLeft = false;
-            }
-            else {
-                displayMovement(intialPosition, newPosition);
-                counter++;
-            }
-        } else {
-            canMoveLeft = false
-        }
-    }
+    movementsCallbacks.forEach(movement => {
+        move(movement, intialPosition, enemiesPositions, alliesPositions);
+    })
 }
 
-
-main()
-
+main();
 
 // Nawfal Hamdi
