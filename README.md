@@ -1,2 +1,3 @@
-# cegedimCodingTest
-Cegedim coding test
+# Cegedim coding test
+
+By @Nawfal Hamdi
